@@ -5,10 +5,28 @@
 ## 特色
 
 1、项目采用的是RAG增强检索，基础检索使用llm-wiki的设计，为了确保速度，优先使用wiki，夜间定时使用RAG自更新
+
 2、wiki目录维护的是AI+用户的知识，用户可以不必依赖源文件，加入定制化或者自己的知识放入wiki，AI根据RAG进行知识确诊和边界判断
+
 3、工作空间保存wiki+rag+log，源文件可以多绑定工作空间，可以做到跨PC知识库移植
+
 4、集成mcp服务，定制mcp给你的AGENT
+
 5、内部集成skill及agent.md，在sample里面，你可以规划你的示例知识库，你可以在这里开始你的知识库示例，如何定制你完全可以随你自己开始
+
+## 技术栈 / Tech Stack
+
+| 层 | 选型 |
+|---|---|
+| 语言 | Python ≥ 3.10（实测 3.11） |
+| 接口协议 | MCP（stdio）— 纯后端，无 Web / 无前端 |
+| 核心依赖 | `mcp`、`pyyaml`、`jieba`（中文分词）、`rank-bm25` |
+| RAG 检索 | 双引擎：`bm25`（默认，零外部依赖）/ `semantic`（可选：`chromadb` + `sentence-transformers` + `numpy`，嵌入模型 `bge-small-zh-v1.5`） |
+| 文档解析（可选） | `PyMuPDF`（PDF 文字抽取） |
+| 配置 / 存储 | YAML（`config/config.yaml` 工作区注册表 + 各工作区 `{库名}.kms` 自描述；源文件层只读引用、不拷贝） |
+| 版本管理 | git（工作区 `wiki/` 层） |
+
+> 选型取向：**轻量优先、默认零模型可用**；语义引擎与 PDF 解析作为可选依赖按需启用。
 
 ## 目录
 
