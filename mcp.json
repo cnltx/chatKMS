@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "chatkms": {
+      "description": "chatKMS 知识库 — RAG(BM25轻量) + Wiki + 多知识库管理",
+      "command": "python",
+      "args": [
+        "D:\\2_Tools\\KMS\\chatKMS\\backend\\mcp_server.py"
+      ],
+      "env": {
+        "CHATKMS_CONFIG": "D:\\2_Tools\\KMS\\chatKMS\\config\\config.yaml"
+      }
+    }
+  }
+}

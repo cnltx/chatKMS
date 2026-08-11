@@ -1,0 +1,4 @@
+# chatKMS 语义检索引擎（可选）— 启用 CHATKMS_ENGINE=semantic 或 config.yaml rag.engine=semantic 时安装
+chromadb>=0.5.0
+sentence-transformers>=2.2.0
+numpy>=1.24.0
