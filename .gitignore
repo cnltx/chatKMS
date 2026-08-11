@@ -11,3 +11,6 @@ build/
 .rag/
 .hermes/
 *.log
+
+# 本地配置（避免把本地路径/知识库注册提交进开源仓库；用 config.yaml.example 模板）
+config/config.yaml
