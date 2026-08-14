@@ -11,9 +11,9 @@ import yaml
 
 _APP_DIR = Path(__file__).resolve().parents[1]
 _DEFAULT_CONFIG = _APP_DIR / "config" / "config.yaml"
-# 兜底默认：仅当 config.yaml 缺失 workspace_root 字段时使用（中性值，随用户主目录）。
+# 兜底默认：仅当 config.yaml 缺失 workspace_root 字段时使用。
 # 运行时路径的权威来源是 config.yaml（见 get_config / load_config）。
-_DEFAULT_WORKSPACE_ROOT = str(Path.home() / "kmsWorkspace")
+_DEFAULT_WORKSPACE_ROOT = r"D:\0_Work\kmsWorkspace"
 
 _cfg: Optional[dict[str, Any]] = None
 
@@ -26,7 +26,7 @@ def config_path() -> Path:
 def _default_config() -> dict[str, Any]:
     return {
         "name": "chatKMS",
-        "version": "0.4.0",
+        "version": "0.5.0",
         "workspace_root": _DEFAULT_WORKSPACE_ROOT,
         "knowledge_bases": [],
         "rag": {"engine": "bm25", "semantic_model": "BAAI/bge-small-zh-v1.5",

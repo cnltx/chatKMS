@@ -20,13 +20,13 @@ for d in (_app_dir, _script_dir):
     if d not in sys.path:
         sys.path.insert(0, d)
 
-from backend.kb_manager import KBManager, append_log, git_init, _name_of, read_kms
+from backend.kb_manager import KBManager, append_log, git_init, ingest_input, _name_of, read_kms
 from backend import rag
 from backend import wiki
 from backend import sources as src
 
 SERVER_NAME = "chatkms"
-SERVER_VERSION = "0.4.0"
+SERVER_VERSION = "0.5.0"
 
 
 # ── 上下文 ─────────────────────────────────────────────
@@ -148,6 +148,15 @@ async def main() -> None:
             Tool(name="append_log",
                  description="向工作区 log/ 追加一条今日日志",
                  inputSchema={"type": "object", "properties": {"note": {"type": "string"}}, "required": ["note"]}),
+            Tool(name="ingest_input",
+                 description="v0.5 保存用户使用知识库时输入的一句话/一份资料。AGENT 按 AGENTS.md 先辨别是否有关再路由：wiki/auto→写wiki(默认待确认)；source→源层只读,暂存工作区inbox并提醒用户落盘源路径；note→仅记log(判为无关)。每次自动记log",
+                 inputSchema={"type": "object", "properties": {
+                     "content": {"type": "string"},
+                     "mode": {"type": "string", "enum": ["auto", "wiki", "source", "note"], "default": "auto"},
+                     "title": {"type": "string", "description": "可选标题，缺省取内容首行"},
+                     "pending": {"type": "boolean", "default": True, "description": "wiki 模式先入待确认"},
+                     "reference": {"type": "string", "description": "参考/佐证"}},
+                     "required": ["content"]}),
             Tool(name="wiki_search",
                  description="Wiki 优先检索：直接关键词搜索 wiki 页面（文件名+标题+正文），毫秒级。先试这个，不够再 rag_query",
                  inputSchema={"type": "object", "properties": {
@@ -306,6 +315,19 @@ async def main() -> None:
             if name == "append_log":
                 append_log(Path(ws) / "log", arguments["note"])
                 return TextContent(type="text", text=f"✅ 已记录: {arguments['note']}")
+
+            if name == "ingest_input":
+                r = ingest_input(ws, arguments.get("content", ""),
+                                 mode=arguments.get("mode", "auto"),
+                                 title=arguments.get("title", ""),
+                                 pending=arguments.get("pending", True),
+                                 reference=arguments.get("reference", ""))
+                if r["target"] == "inbox":
+                    srcs = "\n".join(f"    - {s}" for s in sources) or "    （无源路径）"
+                    return TextContent(type="text", text=f"✅ 已暂存工作区: `{r['saved']}`\n{r['note']}\n源路径(只读，需你落盘):\n{srcs}")
+                if r["target"] == "log":
+                    return TextContent(type="text", text=f"已记录(未落入知识库): {r['note']}")
+                return TextContent(type="text", text=f"✅ 已写入: `{r['saved']}`\n{r['note']}")
 
             if name == "wiki_search":
                 rows = []

@@ -14,7 +14,6 @@ from typing import Iterator
 
 
 _TEXT_EXTS = {".md", ".txt"}
-_INDEXABLE_EXTS = _TEXT_EXTS | {".pdf"}
 
 
 def iter_docs(workspace: str, sources: list[str]):
@@ -63,7 +62,6 @@ def _skip_dir(name: str) -> bool:
 
 def iter_source_files(sources: list[str]) -> Iterator[SourceFile]:
     """递归列出所有源路径下的全部文件，跳过隐藏目录。"""
-    seen: set[str] = set()
     for root in sources or []:
         root_path = Path(root)
         if not root_path.is_dir():
@@ -74,10 +72,6 @@ def iter_source_files(sources: list[str]) -> Iterator[SourceFile]:
             for f in files:
                 fp = Path(dp) / f
                 rel = os.path.relpath(fp, root_path).replace("\\", "/")
-                key = rel.lower()
-                if rel in seen:
-                    pass
-                seen.add(key)
                 yield SourceFile(root=root, root_name=root_name, rel=rel,
                                  name=f, abspath=str(fp), size=fp.stat().st_size)
 

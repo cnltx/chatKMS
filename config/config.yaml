@@ -1,14 +1,15 @@
 name: chatKMS
-version: 0.4.0
+version: 0.5.0
+# 知识库工作区默认根目录（创建时可指定任意其他路径）
 workspace_root: D:\2_Tools\KMS
+# RAG 引擎：bm25(默认,零依赖) 或 semantic(语义检索,需安装 env/requirements-semantic.txt)
 rag:
   engine: bm25
   semantic_model: BAAI/bge-small-zh-v1.5
   chunk_size: 512
   chunk_overlap: 128
   top_k: 5
-knowledge_bases:
-- name: charger
-  workspace: D:\2_Tools\KMS\charger
-  created_at: '2026-08-11T11:06:30'
-active_kb: D:\2_Tools\KMS\charger
+# 基础工作空间模板目录（默认 chatKMS/sample/default，可改为自己的模板目录）
+# template_dir:
+# 知识库只登记工作区；源路径由各工作区内的 {库名}.kms 提供，此处不存 sources
+knowledge_bases: []

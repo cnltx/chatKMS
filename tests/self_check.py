@@ -96,8 +96,17 @@ def main() -> None:
     st = wiki.status(info.workspace)
     assert st["wiki_pages"] >= 1 and st["by_dir"].get("可信", 0) >= 1, f"wiki_status 异常: {st}"
 
+    # 7. v0.5 用户输入登记（ingest_input）
+    from backend.kb_manager import ingest_input
+    r1 = ingest_input(info.workspace, "协议定义设备接入后自动识别与配置。", mode="wiki", title="输入示例")
+    assert r1["target"] == "wiki" and (ws / "wiki" / "待确认" / Path(r1["saved"]).name).is_file(), f"wiki录入失败: {r1}"
+    r2 = ingest_input(info.workspace, "# 一份原始资料内容", mode="source", title="材料")
+    assert r2["target"] == "inbox" and (ws / r2["saved"]).is_file(), f"source暂存失败: {r2}"
+    r3 = ingest_input(info.workspace, "无关内容", mode="note")
+    assert r3["target"] == "log" and r3["saved"] is None, f"note记录失败: {r3}"
+
     shutil.rmtree(work, ignore_errors=True)
-    print("✅ 全部自检通过（工作区/源文件分离、多 sources、.kms、模板派生、按文件名源访问、wiki优先、RAG bm25 light/auto/heavy）")
+    print("✅ 全部自检通过（工作区/源文件分离、多 sources、.kms、模板派生、按文件名源访问、wiki优先、RAG bm25 light/auto/heavy、v0.5 用户录入登记 wiki/inbox/log）")
 
 
 if __name__ == "__main__":

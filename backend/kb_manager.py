@@ -17,6 +17,7 @@ config.yaml 只登记 workspace；源路径由各工作区的 .kms 提供。
 """
 from __future__ import annotations
 import os
+import re
 import shutil
 import subprocess
 from dataclasses import dataclass, field
@@ -50,6 +51,64 @@ def append_log(workspace: Path, note: str) -> None:
 
 def _kms_name(name: str) -> str:
     return f"{name}.kms"
+
+
+def _safe_title(title: str, content: str) -> str:
+    """取用户输入的标题/首行作文件名，剔除非法字符。"""
+    base = (title or content).strip().splitlines()[0][:40] if (title or content).strip() else "输入"
+    base = re.sub(r'[\\/:*?"<>|\r\n\t]+', " ", base).strip()
+    return base or "输入"
+
+
+def ingest_input(workspace: str, content: str, mode: str = "auto",
+                 title: str = "", pending: bool = True, reference: str = "") -> dict:
+    """v0.5：保存用户使用知识库时输入的一句话/一份资料。
+
+    mode:
+      wiki/auto → 写入 wiki（pending=True→待确认/ 否则 可信/），返回 wiki 相对路径
+      source     → 源层只读，暂存到工作区 inbox/ 并提示用户落盘源路径
+      note       → 仅记 log（供 AGENT 判为无关时记录）
+    归属判定（有关/无关、wiki 或源资料）由 AI 终端按 AGENTS.md 规范做出，本函数只负责落盘。
+    """
+    ws = Path(workspace)
+    content = (content or "").strip()
+    if not content:
+        raise ValueError("内容为空")
+    name = _safe_title(title, content)
+
+    if mode == "note":
+        append_log(ws, f"用户输入(判为无关，仅记录): {content[:80]}")
+        return {"saved": None, "target": "log", "note": "仅记录，未落入知识库"}
+
+    if mode == "source":
+        inbox = ws / "inbox"
+        inbox.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        fname = f"inbox_{stamp}_{name}.md"
+        meta = f"\n> 录入 @ {_now()}"
+        if reference:
+            meta += f" · 参考/佐证: {reference}"
+        (inbox / fname).write_text(f"# {name}\n\n{content}\n\n---\n{meta}", encoding="utf-8")
+        append_log(ws, f"用户录入暂存 inbox（源层只读，需用户落盘源路径）: {fname}")
+        return {"saved": f"inbox/{fname}", "target": "inbox",
+                "note": "源层只读：请把该文件放入源路径，再由 AI 引用"}
+
+    # wiki / auto：默认先入待确认
+    sub = "待确认" if pending else "可信"
+    wiki = ws / "wiki" / sub
+    wiki.mkdir(parents=True, exist_ok=True)
+    fname, c = f"{name}.md", 1
+    while (wiki / fname).exists():
+        c += 1
+        fname = f"{name}_{c}.md"
+    meta = f"> 录入 @ {_now()}"
+    if reference:
+        meta += f" · 参考/佐证: {reference}"
+    (wiki / fname).write_text(f"# {name}\n\n{content}\n\n---\n{meta}", encoding="utf-8")
+    flag = "（待确认）" if pending else "（可信）"
+    append_log(ws, f"用户录入→wiki/{sub}/{fname}{flag}")
+    return {"saved": f"wiki/{sub}/{fname}", "target": "wiki",
+            "note": "默认先入待确认，佐证充分后由 AI 移至可信"}
 
 
 _SCHEMA_DIRS = ("wiki/可信", "wiki/待确认", "log", ".rag")
